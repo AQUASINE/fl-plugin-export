@@ -1,4 +1,4 @@
-# FL Studio Plugin Export
+# FL Studio Plugin Database Export
 
 To address the lack of a way to export a list of plugins directly from FL Studio, this is a simple workaround script that allows you to export a list of all your plugins in FL Studio in `.csv` format by collecting all the data from .nfo files in the `Image-Line/FL Studio/Presets/Plugin database/Installed` folder. 
 
