@@ -35,6 +35,17 @@ def load_nfo_files(nfo_files):
         data.append(load_nfo_file(nfo_file))
     return data
 
+def remove_duplicates(nfo_data):
+    # use the 'ps_file_name_0' key to check for duplicates
+    unique_data = []
+    unique_names = set()
+    for plugin in nfo_data:
+        name = plugin['ps_file_name_0']
+        if name not in unique_names:
+            unique_data.append(plugin)
+            unique_names.add(name)
+    return unique_data
+
 
 def get_plugin_list(installed_folder):
     # Plugin database/nfo files are stored in the 'Installed' folder
@@ -56,6 +67,7 @@ def get_plugin_list(installed_folder):
             nfo_data += load_nfo_files(nfo_paths)
 
         print(f"Found {len(nfo_data)} {category_folder} plugins.")
+        nfo_data = remove_duplicates(nfo_data)
         plugins_dict[category_folder] = nfo_data
 
     return plugins_dict
@@ -136,7 +148,6 @@ else:
     if not os.path.exists(installed_folder):
         print("Path not found. Please make sure you have entered the correct absolute path.")
         exit()
-
 
 names_only_str = "Output only plugin names?"
 if not names_only:
