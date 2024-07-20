@@ -1,5 +1,6 @@
 # this script is for extracting a list of plugins from FL Studio's plugin database
 import os
+import re
 import json
 
 def load_nfo_file(filepath):
@@ -46,6 +47,40 @@ def remove_duplicates(nfo_data):
             unique_names.add(name)
     return unique_data
 
+def remove_non_verified(nfo_data):
+    # load the VerifiedIDs.nfo file to get a list of verified plugins
+    verified_plugins = []
+    with open(installed_folder + '\\VerifiedIDs.nfo', 'r') as file:
+        for line in file:
+            info = line.split(':')
+            file_path = info[2].strip().split('=')[1]
+            # grab plugin name from "\(name).nfo" using regex
+            pattern = re.compile(r'.*\\(.+).(nfo|NFO)')
+            match = pattern.search(file_path)
+            if match:
+                plugin_name = match.group(1)
+                verified_plugins.append(plugin_name)
+    print(f"Found {len(verified_plugins)} verified plugins.")
+    print(verified_plugins)
+        
+    verified_data = []
+    removed_data = []
+    for plugin in nfo_data:
+        if 'ps_file_name_0' in plugin.keys() and plugin['ps_file_name_0'] in verified_plugins:
+            verified_data.append(plugin)
+            continue
+
+        removed_data.append(plugin)
+            
+    print(f"Kept {len(verified_data)} verified plugins.")
+    print(f"Removed {len(removed_data)} unverified plugins.")
+
+    for plugin in removed_data:
+        print(plugin['ps_file_name_0'])
+    
+    return verified_data
+        
+
 
 def get_plugin_list(installed_folder):
     # Plugin database/nfo files are stored in the 'Installed' folder
@@ -64,8 +99,11 @@ def get_plugin_list(installed_folder):
         nfo_data = []
         for subfolder_type in subfolder_types:
             nfo_paths = find_nfo_files(os.path.join(installed_folder, category_folder, subfolder_type))
-            nfo_data += load_nfo_files(nfo_paths)
-
+            data = load_nfo_files(nfo_paths)
+            if subfolder_type != 'Fruity':
+                data = remove_non_verified(data)
+            nfo_data.extend(data)
+        
         print(f"Found {len(nfo_data)} {category_folder} plugins.")
         nfo_data = remove_duplicates(nfo_data)
         plugins_dict[category_folder] = nfo_data
