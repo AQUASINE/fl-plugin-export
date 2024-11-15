@@ -2,6 +2,7 @@
 import os
 import re
 import json
+import argparse
 
 def load_nfo_file(filepath):
     data_dict = {}
@@ -46,6 +47,27 @@ def remove_duplicates(nfo_data):
             unique_data.append(plugin)
             unique_names.add(name)
     return unique_data
+
+
+def output_json_full(plugins_dict):
+    plugin_json = {}
+    manufacturer_dict = {}
+
+    for category in plugins_dict.values():
+        for plugin in category:
+            manufacturer = plugin.get('ps_file_vendorname_0')
+            product_name = plugin.get('ps_file_name_0')
+
+            if manufacturer:
+                if manufacturer not in manufacturer_dict:
+                    manufacturer_dict[manufacturer] = []
+                manufacturer_dict[manufacturer].append(product_name)
+
+    plugin_json['plugins'] = [{'manufacturer': key, 'products': value} for key, value in manufacturer_dict.items()]
+    
+    with open('plugins.json', 'w') as file:
+        json.dump(plugin_json, file, indent=2)
+    print("Saved plugins.json")
 
 def remove_non_verified(nfo_data):
     # load the VerifiedIDs.nfo file to get a list of verified plugins
@@ -159,49 +181,33 @@ def write_plugin_info(file, plugins):
     for plugin in plugins:
         file.write(','.join(plugin.values()) + '\n')
 
-# try loading from pluginpreferences.json first
-installed_folder = None
-names_only = False
-separate_files = False
-try:
-    with open('pluginpreferences.json', 'r') as file:
-        data = json.load(file)
-        installed_folder = data['installed_folder']
-        names_only = data['names_only']
-        separate_files = data['separate_files']
-    print("Found last configuration in pluginpreferences.json. Previous 'Installed' folder was:", installed_folder)
-    print("Pressing enter for the following prompts will use the saved preferences.\n")
-except:
-    pass
+def main():
+    global installed_folder
+    parser = argparse.ArgumentParser(description="Extract plugin data from FL Studio")
+    parser.add_argument("--json-full", action="store_true", help="Output plugins in full JSON format")
+    args = parser.parse_args()
 
-# prompt user to use the saved preferences or enter new ones
-if installed_folder and input("Use saved 'Installed' folder? (Y/n): " ).lower() == 'n':
-    installed_folder = None
+    try:
+        with open('pluginpreferences.json', 'r') as file:
+            data = json.load(file)
+            installed_folder = data['installed_folder']
+            names_only = data['names_only']
+            separate_files = data['separate_files']
+        print("Using last saved configuration.")
+    except:
+        installed_folder = input("Enter the path to the 'Installed' folder: ")
+        names_only = input("Output only plugin names? (y/N): ").lower() == 'y'
+        separate_files = input("Output separate CSV files for each category? (y/N): ").lower() == 'y'
+        with open('pluginpreferences.json', 'w') as file:
+            json.dump({'installed_folder': installed_folder, 'names_only': names_only, 'separate_files': separate_files}, file)
 
-if installed_folder:
-    print("Using folder: ", installed_folder)
-else:
-    # prompt user for the path to the 'Installed' folder
-    installed_folder = input("Enter the path to the 'Image-Line\FL Studio\Presets\Plugin database\Installed' folder: ")
-    if not os.path.exists(installed_folder):
-        print("Path not found. Please make sure you have entered the correct absolute path.")
-        exit()
+    plugins = get_plugin_list(installed_folder)
 
-names_only_str = "Output only plugin names?"
-if not names_only:
-    names_only = input(names_only_str + " (y/N): ").lower() == 'y'
-else:
-    names_only = input(names_only_str + " (Y/n): ").lower() != 'n'
+    if args.json_full:
+        output_json_full(plugins)
+    else:
+        output_csv_from_dict(plugins, names_only=names_only, separate_files=separate_files)
 
-separate_files_str = "Output separate csv files for each category (Effects, Generators)?"
 
-if not separate_files:
-    separate_files = input(separate_files_str + " (y/N): ").lower() == 'y'
-else:
-    separate_files = input(separate_files_str + " (Y/n): ").lower() != 'n'
-
-with open('pluginpreferences.json', 'w') as file:
-    json.dump({'installed_folder': installed_folder, 'names_only': names_only, 'separate_files': separate_files}, file)
-
-plugins = get_plugin_list(installed_folder)    
-output_csv_from_dict(plugins, names_only=names_only, separate_files=separate_files)
+if __name__ == "__main__":
+    main()
