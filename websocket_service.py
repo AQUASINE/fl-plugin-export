@@ -1,7 +1,6 @@
 import asyncio
 import websockets
 import os
-import time
 import json
 
 from pluginlist import get_plugin_list, output_csv_from_dict  # Import your existing functions
@@ -34,11 +33,9 @@ async def send_csv(websocket):
 
 async def send_plugin_data(websocket, path):
     while True:
-        # Generate new plugin data
         plugins_dict = get_plugin_list(installed_folder)
         output_csv_from_dict(plugins_dict)
 
-        # Read the CSV files and send them
         csv_files = ["Effects.csv", "Generators.csv"]
         plugin_data = {}
 
@@ -47,11 +44,9 @@ async def send_plugin_data(websocket, path):
                 with open(csv_file, "r") as file:
                     plugin_data[csv_file] = file.read()
 
-        # Send data as JSON
         await websocket.send(json.dumps(plugin_data))
         print("Sent updated plugin data.")
 
-        # Wait 5 minutes before sending again
         await asyncio.sleep(300)
 
 start_server = websockets.serve(send_plugin_data, "localhost", 8765)
