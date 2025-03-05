@@ -3,3 +3,4 @@ Generators.csv
 Effects.csv
 plugins.csv
 plugins.json
+__pycache__/
