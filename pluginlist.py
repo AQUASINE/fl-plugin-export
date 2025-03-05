@@ -69,7 +69,7 @@ def output_json_full(plugins_dict):
         json.dump(plugin_json, file, indent=2)
     print("Saved plugins.json")
 
-def remove_non_verified(nfo_data):
+def remove_non_verified(nfo_data, installed_folder):
     # load the VerifiedIDs.nfo file to get a list of verified plugins
     verified_plugins = []
     with open(installed_folder + '\\VerifiedIDs.nfo', 'r') as file:
@@ -123,7 +123,7 @@ def get_plugin_list(installed_folder):
             nfo_paths = find_nfo_files(os.path.join(installed_folder, category_folder, subfolder_type))
             data = load_nfo_files(nfo_paths)
             if subfolder_type != 'Fruity':
-                data = remove_non_verified(data)
+                data = remove_non_verified(data, installed_folder)
             nfo_data.extend(data)
         
         print(f"Found {len(nfo_data)} {category_folder} plugins.")

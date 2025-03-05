@@ -18,7 +18,6 @@ def load_preferences():
             json.dump({"installed_folder": installed_folder}, file, indent=2)
         return installed_folder
 
-installed_folder = load_preferences()
 
 async def send_csv(websocket):
     """Reads the CSV files and sends their contents over WebSocket."""
@@ -32,6 +31,8 @@ async def send_csv(websocket):
         print(f"Error sending CSV file: {e}")
 
 async def send_plugin_data(websocket, path):
+    installed_folder = load_preferences()
+    print(f"Installed folder: {installed_folder}")
     while True:
         plugins_dict = get_plugin_list(installed_folder)
         output_csv_from_dict(plugins_dict)
