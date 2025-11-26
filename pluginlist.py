@@ -88,6 +88,12 @@ def remove_non_verified(nfo_data, installed_folder):
     verified_data = []
     removed_data = []
     for plugin in nfo_data:
+        if 'ps_file_scanflags_0' in plugin.keys():
+            # skip plugins that are marked as error
+            if plugin['ps_file_scanflags_0'] != '1':
+                removed_data.append(plugin)
+                print(f"Removing plugin with error scanflags: {plugin['ps_file_name_0']}")
+                continue
         if 'ps_file_name_0' in plugin.keys() and plugin['ps_file_name_0'] in verified_plugins:
             verified_data.append(plugin)
             continue
